@@ -49,10 +49,14 @@ namespace
 			const std::string steam_path = steam::SteamAPI_GetSteamInstallPath();
 			if (steam_path.empty() || !utils::io::file_exists(steam_path + "/steam.exe"))
 			{
-				game::show_error("Steam must be installed for the game to run. Please install Steam!");
+				game::show_error("Steam must be installed for the game to run. Please install Steam! [BOIII]");
 				ShellExecuteA(nullptr, "open", "https://store.steampowered.com/about/", nullptr, nullptr, SW_SHOWNORMAL);
 				TerminateProcess(GetCurrentProcess(), 1);
 			}
+		}
+		else
+		{
+			printf("[BOIII] -nosteam flag detected, skipping Steam installation check\n");
 		}
 
 		utils::hook::set(g_original_import.first, g_original_import.second);
