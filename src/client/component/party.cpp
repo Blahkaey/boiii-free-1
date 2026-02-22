@@ -25,6 +25,10 @@ namespace party
 		std::atomic_bool is_connecting_to_dedi{false};
 		game::netadr_t connect_host{{}, {}, game::NA_BAD, {}};
 
+		std::mutex hostname_mutex;
+		std::string cached_server_hostname;
+		int cached_server_max_clients = 0;
+
 		void update_dedi_dvar(bool on_dedi)
 		{
 			game::Dvar_SetFromStringByName("cl_connected_to_dedi", on_dedi ? "1" : "0", true);
@@ -162,6 +166,13 @@ namespace party
 			is_connecting_to_dedi = info.get("dedicated") == "1";
 			update_dedi_dvar(is_connecting_to_dedi.load());
 
+			{
+				std::lock_guard lock(hostname_mutex);
+				cached_server_hostname = info.get("hostname");
+				const auto max_clients_str = info.get("sv_maxclients");
+				cached_server_max_clients = max_clients_str.empty() ? 0 : atoi(max_clients_str.data());
+			}
+
 			if (atoi(info.get("protocol").data()) != PROTOCOL)
 			{
 				const auto str = "Invalid protocol.";
@@ -213,6 +224,9 @@ namespace party
 			scheduler::once([=]
 			{
 				const auto usermap_id = workshop::get_usermap_publisher_id(mapname);
+
+				workshop::set_pending_reconnect(utils::string::va(
+					"%i.%i.%i.%i:%hu", target.ipv4.a, target.ipv4.b, target.ipv4.c, target.ipv4.d, target.port));
 
 				if (workshop::check_valid_usermap_id(mapname, usermap_id, workshop_id) &&
 					workshop::check_valid_mod_id(mod_id, workshop_id))
@@ -398,6 +412,25 @@ namespace party
 			return static_cast<uint16_t>(dvar->current.value.integer);
 		}
 		return 3074; // BO3 default
+	}
+
+	std::string get_server_hostname()
+	{
+		std::lock_guard lock(hostname_mutex);
+		return cached_server_hostname;
+	}
+
+	int get_server_max_clients()
+	{
+		std::lock_guard lock(hostname_mutex);
+		return cached_server_max_clients;
+	}
+
+	void clear_server_info()
+	{
+		std::lock_guard lock(hostname_mutex);
+		cached_server_hostname.clear();
+		cached_server_max_clients = 0;
 	}
 
 	struct component final : client_component
