@@ -1192,16 +1192,24 @@ for (auto& p : prefixes) utils::string::trim(p); std::vector<std::filesystem::pa
 		window.get_html_frame()->register_callback(
 			"selectGameFolder", [](const std::vector<html_argument>& /*params*/) -> CComVariant
 			{
+				static std::atomic<bool> folder_picker_active{false};
+				if (folder_picker_active.exchange(true))
+				{
+					return CComVariant("cancelled");
+				}
+
 				std::string selected_str;
 				try
 				{
 					if (!utils::com::select_folder(selected_str, "Select your Black Ops 3 installation folder"))
 					{
+						folder_picker_active = false;
 						return CComVariant("cancelled");
 					}
 				}
 				catch (...)
 				{
+					folder_picker_active = false;
 					return CComVariant("error");
 				}
 
@@ -1220,6 +1228,7 @@ for (auto& p : prefixes) utils::string::trim(p); std::vector<std::filesystem::pa
 
 				SetCurrentDirectoryA(selected_str.c_str());
 
+				folder_picker_active = false;
 				return CComVariant(selected_str.c_str());
 			});
 

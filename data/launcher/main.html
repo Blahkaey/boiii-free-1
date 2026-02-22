@@ -205,6 +205,27 @@
           <span id="modsPageLabel">Page 1 / 1</span>
           <button type="button" class="btn" id="modsNextPageBtn">Next &#8250;</button>
         </div>
+
+        <div id="libraryOverlay" class="workshop-overlay"></div>
+        <div id="libraryModal" class="workshop-modal">
+          <div class="workshop-modal-header">
+            <h2 class="workshop-modal-title" id="libraryModalTitle">Mod Details</h2>
+            <button type="button" class="workshop-modal-close" id="libraryModalClose">&times;</button>
+          </div>
+          <div class="workshop-modal-body">
+            <div class="workshop-modal-content">
+              <div class="workshop-modal-image" id="libraryModalImage"></div>
+              <div class="workshop-modal-detail-panel">
+                <div class="workshop-modal-info" id="libraryModalInfo"></div>
+                <div class="workshop-modal-description" id="libraryModalDescription"></div>
+              </div>
+            </div>
+          </div>
+          <div class="workshop-modal-footer">
+            <button type="button" class="btn" id="libraryModalViewBtn">View on Steam</button>
+            <button type="button" class="btn btn-primary" id="libraryModalOpenBtn">Open Folder</button>
+          </div>
+        </div>
       </div>
 
       <div id="friendsPage" class="page">
@@ -491,9 +512,11 @@
       <div class="progress-fill" id="progressFill"></div>
     </div>
     <div class="progress-percent" id="progressPercent">0%</div>
-    <button type="button" class="progress-folder" id="progressOpenFolder" title="Open download folder">&#128194;</button>
-    <button type="button" class="progress-cancel" id="progressPause" title="Pause" style="font-size:1rem;">&#9208;</button>
-    <button type="button" class="progress-cancel" id="progressCancel">&times;</button>
+    <div class="progress-buttons">
+      <button type="button" class="progress-folder" id="progressOpenFolder" title="Open download folder">&#128194;</button>
+      <button type="button" class="progress-cancel" id="progressPause" title="Pause" style="font-size:1rem;">&#9208;</button>
+      <button type="button" class="progress-cancel" id="progressCancel">&times;</button>
+    </div>
   </div>
 
   <div class="popup-backdrop" id="manageInstallPopup">

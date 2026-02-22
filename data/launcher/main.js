@@ -47,6 +47,16 @@
   var workshopModalDownloadBtn = document.getElementById('workshopModalDownloadBtn');
   var workshopFilterSelect = document.getElementById('workshopFilterSelect');
 
+  var libraryOverlay = document.getElementById('libraryOverlay');
+  var libraryModal = document.getElementById('libraryModal');
+  var libraryModalTitle = document.getElementById('libraryModalTitle');
+  var libraryModalClose = document.getElementById('libraryModalClose');
+  var libraryModalImage = document.getElementById('libraryModalImage');
+  var libraryModalInfo = document.getElementById('libraryModalInfo');
+  var libraryModalDescription = document.getElementById('libraryModalDescription');
+  var libraryModalViewBtn = document.getElementById('libraryModalViewBtn');
+  var libraryModalOpenBtn = document.getElementById('libraryModalOpenBtn');
+
   if (!Array.prototype.find) {
     Array.prototype.find = function(predicate) {
       if (this == null) throw new TypeError('Array.prototype.find called on null or undefined');
@@ -261,6 +271,10 @@
     }
     var targetEl = document.getElementById(targetPage + 'Page');
     if (targetEl) targetEl.classList.add('active');
+
+    if (targetPage === 'library') {
+      refreshModsGrid();
+    }
 
     if (targetPage === 'workshop' && workshopBrowseItems.length === 0 && !workshopBrowseLoading) {
       try {
@@ -781,6 +795,98 @@
   if (workshopOverlay) workshopOverlay.onclick = hideWorkshopModal;
   if (workshopModal) workshopModal.onclick = function(e) { e.stopPropagation(); };
 
+  function showLibraryModModal(item) {
+    if (!item) return;
+    libraryModalTitle.textContent = item.name || item.folder || 'Untitled';
+
+    if (item.image && String(item.image).length > 0) {
+      libraryModalImage.innerHTML = '<img src="' + escapeHtml(item.image) + '" alt="">';
+      var mImg = libraryModalImage.querySelector('img');
+      if (mImg) {
+        mImg.onerror = function() {
+          this.onerror = null;
+          libraryModalImage.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:rgba(200,196,192,0.25);font-size:2rem;">No Image</div>';
+        };
+      }
+    } else {
+      libraryModalImage.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:rgba(200,196,192,0.25);font-size:2rem;">No Image</div>';
+    }
+
+    var modalRatingHtml = '';
+    var mSr = parseInt(item.starRating, 10) || 0;
+    if (mSr > 0) {
+      var mStars = '';
+      for (var ms = 0; ms < mSr; ms++) mStars += '\u2605';
+      for (var ms = mSr; ms < 5; ms++) mStars += '\u2606';
+      var mColor = mSr >= 4 ? 'rgba(34,197,94,0.9)' : (mSr >= 3 ? 'rgba(250,204,21,0.9)' : 'rgba(239,68,68,0.9)');
+      modalRatingHtml = '<div class="workshop-modal-info-item">'
+        + '<div class="workshop-modal-info-label">Rating</div>'
+        + '<div class="workshop-modal-info-value"><span style="color:' + mColor + ';">' + mStars + ' (' + mSr + '/5)</span></div></div>';
+    }
+
+    var modalSubsHtml = '';
+    var mSubs = parseInt(item.subs, 10) || 0;
+    if (mSubs > 0) {
+      modalSubsHtml = '<div class="workshop-modal-info-item">'
+        + '<div class="workshop-modal-info-label">Subscribers</div>'
+        + '<div class="workshop-modal-info-value">' + mSubs.toLocaleString() + '</div></div>';
+    }
+
+    var modalSizeHtml = '';
+    var lSz = parseInt(item.localSize, 10) || 0;
+    var aSz = parseInt(item.file_size, 10) || 0;
+    var mSize = lSz > 0 ? lSz : aSz;
+    if (mSize > 0) {
+      var sStr = mSize > 1073741824 ? (mSize / 1073741824).toFixed(2) + ' GB'
+        : mSize > 1048576 ? (mSize / 1048576).toFixed(1) + ' MB'
+        : mSize > 1024 ? (mSize / 1024).toFixed(0) + ' KB' : mSize + ' B';
+      modalSizeHtml = '<div class="workshop-modal-info-item">'
+        + '<div class="workshop-modal-info-label">Size</div>'
+        + '<div class="workshop-modal-info-value">' + sStr + '</div></div>';
+    }
+
+    var modalTypeHtml = '<div class="workshop-modal-info-item">'
+      + '<div class="workshop-modal-info-label">Type</div>'
+      + '<div class="workshop-modal-info-value">' + escapeHtml((item.type || 'mod') + (item.source === 'steam' ? ' (Steam)' : '')) + '</div></div>';
+
+    libraryModalInfo.innerHTML =
+      (item.id ? '<div class="workshop-modal-info-item">'
+        + '<div class="workshop-modal-info-label">Workshop ID</div>'
+        + '<div class="workshop-modal-info-value" style="font-family:Consolas,monospace;">' + escapeHtml(String(item.id)) + '</div></div>' : '')
+      + modalTypeHtml + modalRatingHtml + modalSubsHtml + modalSizeHtml;
+
+    libraryModalDescription.innerHTML = convertBBCodeToHtml(item.description || 'No description available.');
+
+    if (item.id && String(item.id).length > 0) {
+      libraryModalViewBtn.style.display = '';
+      libraryModalViewBtn.onclick = function() {
+        try { window.external.openUrl('https://steamcommunity.com/sharedfiles/filedetails/?id=' + item.id); } catch (e) {}
+      };
+    } else {
+      libraryModalViewBtn.style.display = 'none';
+    }
+
+    libraryModalOpenBtn.onclick = function() {
+      if (item.path) {
+        try { window.external.openUrl(item.path); } catch (e) {}
+      }
+    };
+    if (!item.path) libraryModalOpenBtn.style.display = 'none';
+    else libraryModalOpenBtn.style.display = '';
+
+    libraryOverlay.classList.add('active');
+    libraryModal.classList.add('active');
+  }
+
+  function hideLibraryModal() {
+    libraryOverlay.classList.remove('active');
+    libraryModal.classList.remove('active');
+  }
+
+  if (libraryModalClose) libraryModalClose.onclick = hideLibraryModal;
+  if (libraryOverlay) libraryOverlay.onclick = hideLibraryModal;
+  if (libraryModal) libraryModal.onclick = function(e) { e.stopPropagation(); };
+
   if (workshopFilterSelect) {
     workshopFilterSelect.onchange = function() {
       workshopBrowseCurrentPage = 1;
@@ -1271,7 +1377,10 @@
       if (descText.length > 0) {
         descDiv = document.createElement('div');
         descDiv.className = 'mod-card-description';
-        descDiv.textContent = descText;
+        var rawDesc = stripBBCode(descText.replace(/[\r\n]+/g, ' '));
+        var shortDesc = rawDesc.substring(0, 90);
+        if (rawDesc.length > 90) shortDesc += '...';
+        descDiv.textContent = shortDesc;
       }
 
       var metaDiv = document.createElement('div');
@@ -1410,9 +1519,12 @@
       }
 
       card.appendChild(body);
-      card.onclick = (function(fp) {
-        return function(e) { if (fp) { try { window.external.openUrl(fp); } catch (err) {} } };
-      })(item.path || '');
+      card.onclick = (function(it) {
+        return function(e) {
+          if (e.target.closest && e.target.closest('.mod-card-actions')) return;
+          showLibraryModModal(it);
+        };
+      })(item);
       modsGrid.appendChild(card);
     }
 
@@ -1838,18 +1950,24 @@
     } catch (e) {}
   }, 1500);
 
-  var _folderPickerGlobalLock = false;
+  window._folderPickerOpen = false;
   function setupPathBtn(btnId, pathDisplayIds) {
     var btn = document.getElementById(btnId);
     if (!btn) return;
     btn.onclick = function() {
-      if (_folderPickerGlobalLock) return;
-      _folderPickerGlobalLock = true;
+      if (window._folderPickerOpen) return;
+      window._folderPickerOpen = true;
+      btn.disabled = true;
+      var otherBtnId = (btnId === 'setPathBtn') ? 'settingsChangePathBtn' : 'setPathBtn';
+      var otherBtn = document.getElementById(otherBtnId);
+      if (otherBtn) otherBtn.disabled = true;
       try {
         var ex = getExternal();
-        if (!ex || !ex.selectGameFolder) { _folderPickerGlobalLock = false; return; }
+        if (!ex || !ex.selectGameFolder) { window._folderPickerOpen = false; btn.disabled = false; if (otherBtn) otherBtn.disabled = false; return; }
         var result = ex.selectGameFolder();
-        _folderPickerGlobalLock = false;
+        window._folderPickerOpen = false;
+        btn.disabled = false;
+        if (otherBtn) otherBtn.disabled = false;
         if (result === 'cancelled') return;
         if (result === 'invalid') { showMessage('Invalid Folder', 'The selected folder does not contain BlackOps3.exe.'); return; }
         if (result === 'error') { showMessage('Error', 'Failed to open folder picker.'); return; }
@@ -1858,7 +1976,7 @@
           if (el) el.textContent = result;
         }
         showMessage('Game Path Updated', 'Game path set to:\n' + result + '\n\nRestart BOIII for the change to take full effect.');
-      } catch (e) { _folderPickerGlobalLock = false; showMessage('Error', 'Failed to set game path: ' + e.message); }
+      } catch (e) { window._folderPickerOpen = false; btn.disabled = false; if (otherBtn) otherBtn.disabled = false; showMessage('Error', 'Failed to set game path: ' + e.message); }
     };
   }
 

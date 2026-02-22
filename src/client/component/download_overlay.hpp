@@ -19,4 +19,8 @@ namespace download_overlay
 
 	void update(const download_state& state);
 	void clear();
+
+	void show_confirmation(const std::string& title, const std::string& message,
+	                       std::function<void()> on_yes);
+	void close_confirmation();
 }

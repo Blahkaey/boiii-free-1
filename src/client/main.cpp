@@ -521,7 +521,12 @@ int main()
 
 			if (is_server != game::is_server())
 			{
-				throw std::runtime_error("Bad binary loaded into memory");
+				throw std::runtime_error(
+					"Incompatible Game Version Detected:\n"
+					"The latest Black Ops 3 update is not compatible with BOIII.\n"
+					"To fix this, download a previous version of BlackOps3.exe and replace the current updated file in your game directory.\n"
+					"This will restore full client functionality."
+				);
 			}
 
 			if (!is_server && !game::is_client())
@@ -532,7 +537,12 @@ int main()
 						"You are using the outdated BlackOps3.exe. This version is not supported anymore. Please use the latest binary from Steam.");
 				}
 
-				throw std::runtime_error("Bad binary loaded into memory");
+				throw std::runtime_error(
+					"Incompatible Game Version Detected:\n"
+					"The latest Black Ops 3 update is not compatible with BOIII.\n"
+					"To fix this, download a previous version of BlackOps3.exe and replace the current updated file in your game directory.\n"
+					"This will restore full client functionality."
+				);
 			}
 
 			patch_imports();

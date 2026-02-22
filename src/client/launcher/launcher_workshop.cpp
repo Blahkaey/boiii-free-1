@@ -2,6 +2,7 @@
 #include "html/html_frame.hpp"
 #include "launcher_workshop.hpp"
 #include "../game/game.hpp"
+#include "../component/workshop.hpp"
 #include <atomic>
 #include <chrono>
 #include <fstream>
@@ -1355,6 +1356,14 @@ namespace launcher::workshop
 		{
 			try
 			{
+				if (::workshop::downloading_workshop_item)
+				{
+					set_workshop_status("Error: An in-game download is already in progress.", 0.0,
+						"Wait for the current in-game download to finish before starting a new one from the launcher.");
+					return;
+				}
+
+				::workshop::launcher_downloading = true;
 				reset_workshop_status();
 				workshop_cancel_requested = false;
 				workshop_paused = false;
@@ -1576,6 +1585,7 @@ namespace launcher::workshop
 					bool net_baseline_set = false;
 					auto download_phase_start = std::chrono::steady_clock::time_point{};
 					bool warmup_phase = true;
+					double smoothed_speed = 0.0;
 
 					std::filesystem::path log_path = steamcmd_dir / "logs" / "workshop_log.txt";
 					{
@@ -1830,10 +1840,31 @@ namespace launcher::workshop
 								const double bytes_per_sec = (static_cast<double>(net_delta) * 1000.0) / static_cast<double>(dt_ms);
 								if (bytes_per_sec > 0.0)
 								{
-									last_speed_str = human_readable_size(static_cast<std::uint64_t>(bytes_per_sec)) + "/s";
+									if (smoothed_speed <= 0.0)
+										smoothed_speed = bytes_per_sec;
+									else
+										smoothed_speed = 0.3 * bytes_per_sec + 0.7 * smoothed_speed;
+									last_speed_str = human_readable_size(static_cast<std::uint64_t>(smoothed_speed)) + "/s";
 								}
 							}
 							last_tick = now;
+
+							// ETA calculation
+							std::string eta_str;
+							if (expected_size > 0 && display_size > 0 && smoothed_speed > 1024.0)
+							{
+								const auto remaining = (expected_size > display_size) ? (expected_size - display_size) : 0ULL;
+								const int eta_sec = static_cast<int>(static_cast<double>(remaining) / smoothed_speed);
+								if (eta_sec > 0)
+								{
+									int eta_h = eta_sec / 3600;
+									int eta_m = (eta_sec % 3600) / 60;
+									int eta_s = eta_sec % 60;
+									char eta_buf[32];
+									snprintf(eta_buf, sizeof(eta_buf), "%02d:%02d:%02d", eta_h, eta_m, eta_s);
+									eta_str = eta_buf;
+								}
+							}
 
 							auto elapsed = std::chrono::steady_clock::now() - download_start_time;
 							auto elapsed_sec = std::chrono::duration_cast<std::chrono::seconds>(elapsed).count();
@@ -1860,6 +1891,10 @@ namespace launcher::workshop
 								details += last_speed_str;
 							}
 							details += " | Elapsed: " + std::string(time_str);
+							if (!eta_str.empty())
+							{
+								details += " | ETA: " + eta_str;
+							}
 							if (attempt > 1) {
 								details += " | Attempt " + std::to_string(attempt);
 							}
@@ -2216,6 +2251,8 @@ namespace launcher::workshop
 			catch (...) {
 				set_workshop_status("Error: Workshop download crashed.", 0.0, "");
 			}
+
+			::workshop::launcher_downloading = false;
 		}
 	}
 
@@ -2376,6 +2413,10 @@ namespace launcher::workshop
 				auto id = extract_workshop_id(params[0].get_string());
 				if (id.empty())
 					return CComVariant("Error: Invalid Workshop ID or link.");
+				if (::workshop::downloading_workshop_item)
+					return CComVariant("Error: An in-game download is already in progress. Wait for it to finish.");
+				if (::workshop::launcher_downloading.load())
+					return CComVariant("Error: A launcher download is already in progress.");
 				workshop_cancel_requested = false;
 				reset_workshop_status();
 				std::thread(workshop_download_thread, id).detach();
@@ -2392,6 +2433,7 @@ namespace launcher::workshop
 						TerminateProcess(workshop_download_process.hProcess, 1);
 					}
 				}
+				::workshop::launcher_downloading = false;
 				reset_workshop_status();
 				return CComVariant("Cancel requested");
 			});

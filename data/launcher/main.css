@@ -188,6 +188,7 @@ html, body {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 28px 40px 40px 48px;
 }
 
@@ -1242,8 +1243,8 @@ h1 {
 .mod-card-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 7px 12px;
-  margin-top: 6px;
+  gap: 8px 18px;
+  margin-top: 10px;
   font-size: 0.7rem;
   color: rgba(200,196,192,0.4);
 }
@@ -1494,7 +1495,9 @@ h1 {
 
 .settings-body {
   flex: 1;
-  max-width: 720px;
+  max-width: 880px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 .settings-section {
@@ -1624,6 +1627,12 @@ h1 {
 }
 
 .progress-folder:hover { background: rgba(249,115,22,0.55); }
+
+.progress-buttons {
+  display: flex;
+  gap: 8px;
+  margin-left: 4px;
+}
 
 .popup-backdrop {
   position: fixed;
@@ -1983,18 +1992,22 @@ html {
 
 .friends-add-row {
   display: flex;
-  gap: 20px;
+  gap: 18px;
   align-items: center;
+  justify-content: center;
+  max-width: 660px;
+  margin: 8px auto 0;
 }
 
 .friends-add-row input {
   flex: 1;
+  max-width: 240px;
   background: rgba(20,18,17,0.9);
   border: 1px solid rgba(249,115,22,0.28);
   border-radius: 6px;
   color: #fff;
-  padding: 10px 14px;
-  font-size: 0.9rem;
+  padding: 9px 12px;
+  font-size: 0.85rem;
   outline: none;
   cursor: text !important;
   -ms-user-select: text !important;
@@ -2053,8 +2066,8 @@ html {
 .friend-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
+  gap: 14px;
+  padding: 10px 14px 10px 16px;
   background: rgba(38,36,34,0.65);
   border: 1px solid rgba(68,65,63,0.35);
   border-radius: 6px;
@@ -2083,6 +2096,7 @@ html {
 .friend-info {
   flex: 1;
   min-width: 0;
+  margin-left: 6px;
 }
 
 .friend-name {
@@ -2186,6 +2200,10 @@ html {
 .settings-body {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
+  max-width: 880px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 .settings-section {
